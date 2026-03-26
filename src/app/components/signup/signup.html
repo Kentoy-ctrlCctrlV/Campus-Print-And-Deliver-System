@@ -1,0 +1,13 @@
+<div class="signup-container">
+  <h2>Student Sign Up</h2>
+  <form (ngSubmit)="onSubmit()">
+    <label for="name">Name</label>
+    <input id="name" name="name" type="text" [(ngModel)]="studentName" required />
+
+    <label for="email">Email or Phone</label>
+    <input id="email" name="email" type="text" [(ngModel)]="studentEmailOrPhone" required />
+
+    <button type="submit">Continue to Dashboard</button>
+  </form>
+</div>
+

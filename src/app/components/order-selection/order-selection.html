@@ -1,0 +1,42 @@
+<div class="order-page">
+  <h2>New Print Order</h2>
+
+  <label>Drag and Drop PDF/DOCS</label>
+  <input type="file" (change)="onFileChange($event)" multiple accept=".pdf,.doc,.docx" />
+  <ul>
+    <li *ngFor="let f of files">{{ f.name }} ({{ f.sizeInBytes }} bytes)</li>
+  </ul>
+
+  <h3>Print Options</h3>
+  <label>Mode</label>
+  <select [(ngModel)]="printMode">
+    <option value="bw">Black & White</option>
+    <option value="color">Color</option>
+  </select>
+
+  <label>Paper Size</label>
+  <select [(ngModel)]="paperSize">
+    <option value="A4">A4</option>
+    <option value="short">Short</option>
+    <option value="long">Long</option>
+  </select>
+
+  <label>Copies</label>
+  <input type="number" [(ngModel)]="copies" min="1" />
+
+  <label>Pages per Copy</label>
+  <input type="number" [(ngModel)]="pagesPerCopy" min="1" />
+
+  <h3>Delivery</h3>
+  <input type="text" [(ngModel)]="deliveryBuilding" placeholder="Campus Building (e.g. Admin, Library)" />
+
+  <h3>Payment</h3>
+  <label><input type="radio" name="payment" value="gcash" [(ngModel)]="paymentMethod" /> GCash</label>
+  <label><input type="radio" name="payment" value="cod" [(ngModel)]="paymentMethod" /> Cash on Delivery</label>
+
+  <label>Notes (optional)</label>
+  <textarea [(ngModel)]="notes"></textarea>
+
+  <button (click)="submitOrder()">Submit Order</button>
+</div>
+
