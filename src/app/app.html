@@ -1,22 +1,77 @@
 ﻿<style>
-  :host {
-    display: block;
-    min-height: 100vh;
-    margin: 0;
-    font-family: "Inter", system-ui, sans-serif;
-    background-color: #f3f4f6;
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :host { 
+    display: block; 
+    min-height: 100vh; 
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   }
-  main {
-    padding: 1rem;
-    max-width: 1100px;
-    margin: 0 auto;
+  header { 
+    background: linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); 
+    padding: 2rem; 
+    box-shadow: 0 10px 30px rgba(0,0,0,.3); 
+    text-align: center; 
+    color: #fff; 
+  }
+  header h1 { font-size: 2.2rem; font-weight: 700; }
+  header p { margin-top: .4rem; opacity: .9; }
+
+  main { padding: 2.5rem 1rem; max-width: 1100px; margin: 0 auto; }
+  
+  /* Restored original section style */
+  section { 
+    background: #fff; 
+    border-radius: 12px; 
+    padding: 2rem; 
+    box-shadow: 0 20px 40px rgba(0,0,0,.12); 
+    margin-bottom: 1.5rem; 
+  }
+  section h2 { color: #1e3c72; margin-bottom: .6rem; font-size: 1.5rem; }
+  section p { color: #555; margin-bottom: 1rem; line-height: 1.5; }
+
+  /* GCash Section: Shrunken version of your original properties */
+  .gcash-section {
+    max-width: 400px; /* Limits the white card width */
+    margin: 2rem auto; /* Centers it and adds space from the content above */
+    text-align: center;
+  }
+
+  .qr-container { 
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    padding:1.5rem; 
+    background: linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); 
+    border-radius:8px; 
+    min-height:180px; /* Shorter than original 260px */
+  }
+
+  .qr-container img { 
+    max-width: 160px; /* Exactly 2x smaller than your original 320px */
+    width: 100%; 
+    height: auto; 
+    border-radius: 16px; 
+    box-shadow: 0 10px 20px rgba(0,0,0,.12); 
+    background: #fff; 
+  }
+
+  .qr-note { text-align: center; margin-top: 1rem; color: #666; font-size: 0.9rem; }
+
+  footer { text-align:center; color:#fff; padding:1.2rem 0; opacity:.85; }
+
+  @media (max-width:768px){
+    header h1 { font-size:1.4rem; }
+    .qr-container { min-height:160px; }
   }
 </style>
 
-<header style="text-align:center; padding:1rem 0; background:#1e3a8a; color:#fff;">
-  <h1>Campus Print & Deliver System</h1>
+<header>
+  <h1>📚 Campus Print & Deliver System</h1>
+  <p>Fast, Reliable, and Professional Print Services</p>
 </header>
 
 <main>
   <router-outlet></router-outlet>
-</main>
+<footer>
+  <p>&copy; 2026 Campus Print & Deliver System</p>
+</footer>
