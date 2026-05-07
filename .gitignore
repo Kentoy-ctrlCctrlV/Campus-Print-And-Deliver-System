@@ -11,6 +11,15 @@
 npm-debug.log
 yarn-error.log
 
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Prisma
+/prisma/.env
+prisma/migrations/
+
 # IDEs and editors
 .idea/
 .project
@@ -42,3 +51,8 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Database
+*.sql
+*.sqlite
+*.db

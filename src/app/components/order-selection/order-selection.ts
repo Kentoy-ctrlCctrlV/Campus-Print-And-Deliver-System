@@ -22,6 +22,8 @@ export class OrderSelectionComponent {
   notes = '';
   files: FileItem[] = [];
 
+  gcashQrPath: string = 'kzgcashqr.jpg';
+
   constructor(private orderService: OrderService, private router: Router) {}
 
   onFileChange(event: Event) {
@@ -33,7 +35,9 @@ export class OrderSelectionComponent {
         id: Math.random().toString(36).substring(2, 12),
         name: file.name,
         sizeInBytes: file.size,
-        type: file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : file.name.toLowerCase().endsWith('.docx') ? 'docx' : file.name.toLowerCase().endsWith('.doc') ? 'doc' : 'other',
+        type: file.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 
+              file.name.toLowerCase().endsWith('.docx') ? 'docx' : 
+              file.name.toLowerCase().endsWith('.doc') ? 'doc' : 'other',
         uploadedAt: new Date().toISOString(),
       };
       this.files.push(fileItem);
@@ -77,4 +81,3 @@ export class OrderSelectionComponent {
     });
   }
 }
-

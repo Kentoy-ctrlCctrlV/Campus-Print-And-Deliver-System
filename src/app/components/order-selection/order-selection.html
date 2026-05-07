@@ -44,14 +44,14 @@
 
   <h3>Payment</h3>
   <div class="payment-options">
-    <label><input type="radio" name="payment" value="gcash" [(ngModel)]="paymentMethod" /> GCash</label>
+    <label><input type="radio" name="payment" value="gcash" [(ngModel)]="paymentMethod" />GCash</label>
     <label><input type="radio" name="payment" value="cod" [(ngModel)]="paymentMethod" /> Cash on Delivery</label>
   </div>
 
   <div *ngIf="paymentMethod === 'gcash'" class="payment-section">
     <p class="payment-instr">Scan to pay for your order</p>
     <div class="qr-container">
-      <img src="/kzgcashqr.jpg" alt="GCash QR Code" />
+      <img src="/kzgcashqr.jpg" alt="GCash QR Code">
     </div>
     <div class="qr-note">
       <p><strong>KE*T AN***W Z.</strong></p>
