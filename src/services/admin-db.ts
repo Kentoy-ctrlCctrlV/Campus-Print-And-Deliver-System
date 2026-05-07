@@ -1,104 +1,114 @@
-import prisma from '../lib/db';
-import * as bcrypt from 'bcrypt';
+export interface AdminUserRecord {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: 'admin';
+  createdAt: string;
+}
+
+export interface ActivityLogRecord {
+  id: string;
+  adminId: string;
+  action: string;
+  orderId?: string | null;
+  details?: string | null;
+  createdAt: string;
+}
+
+const admins: AdminUserRecord[] = [
+  {
+    id: 'ADMIN-KENTZAYAS',
+    username: 'kentzayas@admin',
+    email: 'kentzayas@admin',
+    password: 'kentadmin69420',
+    role: 'admin',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'ADMIN-MYDENSAGA',
+    username: 'mydensaga@admin',
+    email: 'mydensaga@admin',
+    password: 'mydenadmin12345',
+    role: 'admin',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'ADMIN-VINCENTPEREZ',
+    username: 'vincentperez@admin',
+    email: 'vincentperez@admin',
+    password: 'vincentadmin6767',
+    role: 'admin',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'ADMIN-JOSHGALAGNAO',
+    username: 'joshgalagnao@admin',
+    email: 'joshgalagnao@admin',
+    password: 'joshadmin6969',
+    role: 'admin',
+    createdAt: new Date().toISOString(),
+  },
+];
+
+const activityLogs: ActivityLogRecord[] = [];
+
+function generateId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
+}
 
 export const adminService = {
-  // Create admin user
   async createAdmin(username: string, email: string, password: string) {
-    try {
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const admin = await prisma.adminUser.create({
-        data: {
-          username,
-          email,
-          password: hashedPassword,
-          role: 'admin',
-        },
-      });
-
-      return { id: admin.id, username: admin.username, email: admin.email };
-    } catch (error: any) {
-      if (error.code === 'P2002') {
-        throw new Error('Username or email already exists');
-      }
-      throw new Error('Failed to create admin user');
+    if (admins.some((admin) => admin.username === username || admin.email === email)) {
+      throw new Error('Username or email already exists');
     }
+
+    const newAdmin: AdminUserRecord = {
+      id: generateId('ADMIN'),
+      username,
+      email,
+      password,
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+    };
+
+    admins.push(newAdmin);
+    return { id: newAdmin.id, username: newAdmin.username, email: newAdmin.email };
   },
 
-  // Verify admin credentials
   async verifyAdminLogin(username: string, password: string) {
-    try {
-      const admin = await prisma.adminUser.findUnique({
-        where: { username },
-      });
-
-      if (!admin) {
-        return null;
-      }
-
-      // Compare passwords
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-      if (!passwordMatch) {
-        return null;
-      }
-
-      return { id: admin.id, username: admin.username, email: admin.email };
-    } catch (error) {
-      console.error('Error verifying admin login:', error);
-      throw new Error('Failed to verify admin credentials');
+    const admin = admins.find((entry) => entry.username === username);
+    if (!admin || admin.password !== password) {
+      return null;
     }
+
+    return { id: admin.id, username: admin.username, email: admin.email };
   },
 
-  // Get admin by ID
   async getAdminById(id: string) {
-    try {
-      const admin = await prisma.adminUser.findUnique({
-        where: { id },
-        select: { id: true, username: true, email: true, role: true },
-      });
-      return admin;
-    } catch (error) {
-      console.error('Error fetching admin:', error);
-      throw new Error('Failed to fetch admin');
+    const admin = admins.find((entry) => entry.id === id);
+    if (!admin) {
+      return null;
     }
+
+    return { id: admin.id, username: admin.username, email: admin.email, role: admin.role };
   },
 
-  // Log admin activity
-  async logActivity(
-    adminId: string,
-    action: string,
-    orderId?: string,
-    details?: any
-  ) {
-    try {
-      const log = await prisma.activityLog.create({
-        data: {
-          adminId,
-          action,
-          orderId,
-          details: details ? JSON.stringify(details) : null,
-        },
-      });
-      return log;
-    } catch (error) {
-      console.error('Error logging activity:', error);
-      // Don't throw, just log errors
-    }
+  async logActivity(adminId: string, action: string, orderId?: string, details?: any) {
+    const log: ActivityLogRecord = {
+      id: generateId('LOG'),
+      adminId,
+      action,
+      orderId: orderId || null,
+      details: details ? JSON.stringify(details) : null,
+      createdAt: new Date().toISOString(),
+    };
+
+    activityLogs.unshift(log);
+    return log;
   },
 
-  // Get activity logs
   async getActivityLogs(limit: number = 50) {
-    try {
-      const logs = await prisma.activityLog.findMany({
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: { admin: { select: { username: true } } },
-      });
-      return logs;
-    } catch (error) {
-      console.error('Error fetching activity logs:', error);
-      throw new Error('Failed to fetch activity logs');
-    }
+    return activityLogs.slice(0, limit);
   },
 };

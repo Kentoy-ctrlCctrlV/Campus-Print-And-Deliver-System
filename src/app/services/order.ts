@@ -7,10 +7,41 @@ import { Order } from '../models/order.model';
   providedIn: 'root',
 })
 export class OrderService {
+  private readonly storageKey = 'campusPrintOrders';
   private orders: Order[] = [];
   private orders$ = new BehaviorSubject<Order[]>([]);
 
-  constructor() {}
+  constructor() {
+    this.loadOrders();
+  }
+
+  private loadOrders(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    const saved = localStorage.getItem(this.storageKey);
+    if (!saved) {
+      this.orders$.next(this.orders);
+      return;
+    }
+
+    try {
+      this.orders = JSON.parse(saved) as Order[];
+      this.orders$.next(this.orders);
+    } catch (error) {
+      console.error('Failed to load saved orders:', error);
+      this.orders = [];
+      this.orders$.next(this.orders);
+    }
+  }
+
+  private saveOrders(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    localStorage.setItem(this.storageKey, JSON.stringify(this.orders));
+  }
 
   getOrderStream(): Observable<Order[]> {
     return this.orders$.asObservable();
@@ -26,6 +57,7 @@ export class OrderService {
 
     this.orders.unshift(order);
     this.orders$.next(this.orders);
+    this.saveOrders();
     return of(order).pipe(delay(300));
   }
 
@@ -39,6 +71,7 @@ export class OrderService {
     }
 
     this.orders$.next(this.orders);
+    this.saveOrders();
     return of(this.orders[index]).pipe(delay(200));
   }
 
@@ -47,6 +80,7 @@ export class OrderService {
     if (!order) return of(undefined);
     order.paymentConfirmed = true;
     this.orders$.next(this.orders);
+    this.saveOrders();
     return of(order).pipe(delay(200));
   }
 
@@ -67,7 +101,7 @@ export class OrderService {
   }
 
   private calculatePrice(order: Order): number {
-    const baseRate = order.printMode === 'color' ? 20 : 10;
+    const baseRate = order.printMode === 'color' ? 8 : 6;
     const sizeMultiplier = order.paperSize === 'A4' ? 1 : order.paperSize === 'short' ? 0.9 : 1.1;
     const pageCount = order.copies * order.pagesPerCopy;
     return Math.round((pageCount * baseRate * sizeMultiplier) * 100) / 100;

@@ -18,15 +18,26 @@ export class DashboardComponent {
   activeOrders = 0;
   documentsPrinted = 0;
   studentName = 'Student';
+  private studentEmailOrPhone = '';
 
   constructor(private router: Router, private orderService: OrderService) {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem('studentName');
-      if (saved) {
-        this.studentName = saved;
+      const savedName = window.localStorage.getItem('studentName');
+      const savedEmailOrPhone = window.localStorage.getItem('studentEmailOrPhone');
+      if (savedName) {
+        this.studentName = savedName;
+      }
+      if (savedEmailOrPhone) {
+        this.studentEmailOrPhone = savedEmailOrPhone;
       }
     }
-    this.orders$ = this.orderService.getOrderStream();
+
+    this.orders$ = this.orderService.getOrderStream().pipe(
+      map((orders) =>
+        orders.filter((order) => order.studentEmailOrPhone === this.studentEmailOrPhone)
+      )
+    );
+
     this.orders$.subscribe((orders) => {
       this.activeOrders = orders.filter((order) => order.status !== 'completed' && order.status !== 'cancelled').length;
       this.documentsPrinted = orders.filter((order) => order.status === 'completed').reduce((acc, o) => acc + o.totalPages, 0);
@@ -35,6 +46,14 @@ export class DashboardComponent {
 
   goToOrder() {
     this.router.navigate(['/order']);
+  }
+
+  logout() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('studentName');
+      window.localStorage.removeItem('studentEmailOrPhone');
+    }
+    this.router.navigate(['/']);
   }
 }
 

@@ -19,15 +19,15 @@ router.get('/api/orders', async (req: Request, res: Response) => {
 });
 
 // GET order by ID
-router.get('/api/orders/:id', async (req: Request, res: Response) => {
+router.get('/api/orders/:id', async (req: Request<{ id: string }>, res: Response) => {
   try {
     const order = await orderService.getOrderById(req.params.id);
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    res.json(order);
+    return res.json(order);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -35,14 +35,14 @@ router.get('/api/orders/:id', async (req: Request, res: Response) => {
 router.post('/api/orders', async (req: Request, res: Response) => {
   try {
     const order = await orderService.createOrder(req.body);
-    res.status(201).json(order);
+    return res.status(201).json(order);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // PUT update order status
-router.put('/api/orders/:id/status', async (req: Request, res: Response) => {
+router.put('/api/orders/:id/status', async (req: Request<{ id: string }>, res: Response) => {
   try {
     const { status, changedBy } = req.body;
     const order = await orderService.updateOrderStatus(
@@ -50,21 +50,21 @@ router.put('/api/orders/:id/status', async (req: Request, res: Response) => {
       status,
       changedBy
     );
-    res.json(order);
+    return res.json(order);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // PUT confirm payment
 router.put(
   '/api/orders/:id/confirm-payment',
-  async (req: Request, res: Response) => {
+  async (req: Request<{ id: string }>, res: Response) => {
     try {
       const order = await orderService.confirmPayment(req.params.id);
-      res.json(order);
+      return res.json(order);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   }
 );
@@ -72,23 +72,23 @@ router.put(
 // GET orders by student email
 router.get(
   '/api/orders/student/:email',
-  async (req: Request, res: Response) => {
+  async (req: Request<{ email: string }>, res: Response) => {
     try {
       const orders = await orderService.getOrdersByStudent(req.params.email);
-      res.json(orders);
+      return res.json(orders);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      return res.status(500).json({ error: error.message });
     }
   }
 );
 
 // PUT cancel order
-router.put('/api/orders/:id/cancel', async (req: Request, res: Response) => {
+router.put('/api/orders/:id/cancel', async (req: Request<{ id: string }>, res: Response) => {
   try {
     const order = await orderService.cancelOrder(req.params.id);
-    res.json(order);
+    return res.json(order);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -117,9 +117,9 @@ router.post('/api/admin/login', async (req: Request, res: Response) => {
     }
 
     // In production, you'd want to create a JWT token here
-    res.json(admin);
+    return res.json(admin);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 

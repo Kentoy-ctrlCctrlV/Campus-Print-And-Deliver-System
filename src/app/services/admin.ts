@@ -22,12 +22,12 @@ export class AdminService {
   private currentAdmin$ = new BehaviorSubject<AdminUser | null>(null);
   private isLoggedIn$ = new BehaviorSubject<boolean>(false);
 
-  // In a real application, this would be a backend call
-  // For demo purposes, we'll have a hardcoded admin account
-  private validCredentials = {
-    username: 'admin',
-    password: 'admin123',
-  };
+  private validCredentials = [
+    { username: 'kentzayas@admin', password: 'kentadmin69420' },
+    { username: 'mydensaga@admin', password: 'mydenadmin12345' },
+    { username: 'vincentperez@admin', password: 'vincentadmin6767' },
+    { username: 'joshgalagnao@admin', password: 'joshadmin6969' },
+  ];
 
   constructor() {
     this.checkStoredSession();
@@ -53,37 +53,47 @@ export class AdminService {
   logout(): void {
     this.currentAdmin$.next(null);
     this.isLoggedIn$.next(false);
-    localStorage.removeItem('adminUser');
-    localStorage.removeItem('adminSession');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('adminUser');
+      localStorage.removeItem('adminSession');
+    }
   }
 
   private validateCredentials(credentials: AdminCredentials): AdminUser | null {
-    if (
-      credentials.username === this.validCredentials.username &&
-      credentials.password === this.validCredentials.password
-    ) {
-      const adminUser: AdminUser = {
-        id: 'admin-001',
-        username: credentials.username,
-        email: 'admin@campusprintdeliver.edu',
-        role: 'admin',
-        loggedInAt: new Date().toISOString(),
-      };
+    const validAdmin = this.validCredentials.find(
+      (admin) =>
+        admin.username === credentials.username &&
+        admin.password === credentials.password
+    );
 
-      // Store in localStorage
-      localStorage.setItem('adminUser', JSON.stringify(adminUser));
-      localStorage.setItem('adminSession', 'active');
-
-      this.currentAdmin$.next(adminUser);
-      this.isLoggedIn$.next(true);
-
-      return adminUser;
+    if (!validAdmin) {
+      return null;
     }
 
-    return null;
+    const adminUser: AdminUser = {
+      id: `admin-${credentials.username.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}`,
+      username: credentials.username,
+      email: credentials.username,
+      role: 'admin',
+      loggedInAt: new Date().toISOString(),
+    };
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      localStorage.setItem('adminSession', 'active');
+    }
+
+    this.currentAdmin$.next(adminUser);
+    this.isLoggedIn$.next(true);
+
+    return adminUser;
   }
 
   private checkStoredSession(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
     const storedAdmin = localStorage.getItem('adminUser');
     const session = localStorage.getItem('adminSession');
 

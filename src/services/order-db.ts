@@ -1,178 +1,155 @@
-import prisma from '../lib/db';
-import { Order } from '@prisma/client';
+export interface OrderFile {
+  id: string;
+  name: string;
+  sizeInBytes: number;
+  type: string;
+}
+
+export interface OrderStatusHistoryEntry {
+  id: string;
+  orderId: string;
+  previousStatus: string;
+  newStatus: string;
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface OrderRecord {
+  id: string;
+  studentName: string;
+  studentEmailOrPhone: string;
+  deliveryBuilding: string;
+  printMode: string;
+  paperSize: string;
+  copies: number;
+  pagesPerCopy: number;
+  totalPages: number;
+  totalPrice: number;
+  paymentMethod: string;
+  notes?: string;
+  status: string;
+  paymentConfirmed: boolean;
+  paymentConfirmedAt: string | null;
+  estimatedCompletion: string | null;
+  createdAt: string;
+  updatedAt: string;
+  files: OrderFile[];
+  statusHistory: OrderStatusHistoryEntry[];
+}
+
+const orders: OrderRecord[] = [];
+
+function generateId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
 
 export const orderService = {
-  // Create a new order
   async createOrder(data: any) {
-    try {
-      const order = await prisma.order.create({
-        data: {
-          studentName: data.studentName,
-          studentEmailOrPhone: data.studentEmailOrPhone,
-          deliveryBuilding: data.deliveryBuilding,
-          printMode: data.printMode,
-          paperSize: data.paperSize,
-          copies: data.copies,
-          pagesPerCopy: data.pagesPerCopy,
-          totalPages: data.totalPages,
-          totalPrice: data.totalPrice,
-          paymentMethod: data.paymentMethod,
-          notes: data.notes,
-          status: 'pending',
-          files: {
-            create: data.files?.map((file: any) => ({
-              name: file.name,
-              sizeInBytes: file.sizeInBytes,
-              type: file.type,
-            })) || [],
-          },
-        },
-        include: { files: true },
-      });
+    const newOrder: OrderRecord = {
+      id: generateId('ORD'),
+      studentName: data.studentName || 'Unknown',
+      studentEmailOrPhone: data.studentEmailOrPhone || 'unknown',
+      deliveryBuilding: data.deliveryBuilding || 'Lobby',
+      printMode: data.printMode || 'black_and_white',
+      paperSize: data.paperSize || 'A4',
+      copies: Number(data.copies) || 1,
+      pagesPerCopy: Number(data.pagesPerCopy) || 1,
+      totalPages: Number(data.totalPages) || (Number(data.copies) || 1) * (Number(data.pagesPerCopy) || 1),
+      totalPrice: Number(data.totalPrice) || 0,
+      paymentMethod: data.paymentMethod || 'cash',
+      notes: data.notes || '',
+      status: 'pending',
+      paymentConfirmed: false,
+      paymentConfirmedAt: null,
+      estimatedCompletion: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+      files: (data.files || []).map((file: any) => ({
+        id: generateId('FILE'),
+        name: file.name || 'document.pdf',
+        sizeInBytes: Number(file.sizeInBytes) || 0,
+        type: file.type || 'application/pdf',
+      })),
+      statusHistory: [],
+    };
 
-      return order;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw new Error('Failed to create order');
-    }
+    orders.unshift(newOrder);
+    return newOrder;
   },
 
-  // Get all orders
   async getAllOrders() {
-    try {
-      const orders = await prisma.order.findMany({
-        include: { files: true },
-        orderBy: { createdAt: 'desc' },
-      });
-      return orders;
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      throw new Error('Failed to fetch orders');
-    }
+    return [...orders].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
-  // Get order by ID
   async getOrderById(id: string) {
-    try {
-      const order = await prisma.order.findUnique({
-        where: { id },
-        include: { files: true, statusHistory: true },
-      });
-      return order;
-    } catch (error) {
-      console.error('Error fetching order:', error);
-      throw new Error('Failed to fetch order');
-    }
+    return orders.find((order) => order.id === id) || null;
   },
 
-  // Update order status
-  async updateOrderStatus(
-    id: string,
-    newStatus: string,
-    changedBy: string = 'system'
-  ) {
-    try {
-      const order = await prisma.order.findUnique({ where: { id } });
-      if (!order) throw new Error('Order not found');
-
-      // Create status history entry
-      await prisma.orderStatusHistory.create({
-        data: {
-          orderId: id,
-          previousStatus: order.status,
-          newStatus,
-          changedBy,
-        },
-      });
-
-      // Update order
-      const updatedOrder = await prisma.order.update({
-        where: { id },
-        data: {
-          status: newStatus,
-          estimatedCompletion:
-            newStatus === 'completed' ? new Date() : order.estimatedCompletion,
-        },
-        include: { files: true },
-      });
-
-      return updatedOrder;
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      throw new Error('Failed to update order status');
+  async updateOrderStatus(id: string, newStatus: string, changedBy: string = 'system') {
+    const order = orders.find((entry) => entry.id === id);
+    if (!order) {
+      throw new Error('Order not found');
     }
+
+    const historyEntry: OrderStatusHistoryEntry = {
+      id: generateId('HIST'),
+      orderId: id,
+      previousStatus: order.status,
+      newStatus,
+      changedBy,
+      changedAt: nowIso(),
+    };
+
+    order.status = newStatus;
+    order.updatedAt = nowIso();
+    if (newStatus === 'completed') {
+      order.estimatedCompletion = nowIso();
+    }
+    order.statusHistory.unshift(historyEntry);
+
+    return order;
   },
 
-  // Confirm payment
   async confirmPayment(orderId: string) {
-    try {
-      const order = await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          paymentConfirmed: true,
-          paymentConfirmedAt: new Date(),
-        },
-        include: { files: true },
-      });
-
-      return order;
-    } catch (error) {
-      console.error('Error confirming payment:', error);
-      throw new Error('Failed to confirm payment');
+    const order = orders.find((entry) => entry.id === orderId);
+    if (!order) {
+      throw new Error('Order not found');
     }
+
+    order.paymentConfirmed = true;
+    order.paymentConfirmedAt = nowIso();
+    order.updatedAt = nowIso();
+    return order;
   },
 
-  // Get orders by student email
   async getOrdersByStudent(email: string) {
-    try {
-      const orders = await prisma.order.findMany({
-        where: { studentEmailOrPhone: email },
-        include: { files: true },
-        orderBy: { createdAt: 'desc' },
-      });
-      return orders;
-    } catch (error) {
-      console.error('Error fetching student orders:', error);
-      throw new Error('Failed to fetch student orders');
-    }
+    return orders
+      .filter((order) => order.studentEmailOrPhone === email)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   },
 
-  // Delete order (soft delete by cancelling)
   async cancelOrder(id: string) {
-    try {
-      const order = await prisma.order.update({
-        where: { id },
-        data: { status: 'cancelled' },
-        include: { files: true },
-      });
-      return order;
-    } catch (error) {
-      console.error('Error cancelling order:', error);
-      throw new Error('Failed to cancel order');
+    const order = orders.find((entry) => entry.id === id);
+    if (!order) {
+      throw new Error('Order not found');
     }
+
+    order.status = 'cancelled';
+    order.updatedAt = nowIso();
+    return order;
   },
 
-  // Get order statistics for dashboard
   async getOrderStats() {
-    try {
-      const total = await prisma.order.count();
-      const pending = await prisma.order.count({
-        where: { status: 'pending' },
-      });
-      const printing = await prisma.order.count({
-        where: { status: 'printing' },
-      });
-      const delivering = await prisma.order.count({
-        where: { status: 'delivering' },
-      });
-      const completed = await prisma.order.count({
-        where: { status: 'completed' },
-      });
+    const total = orders.length;
+    const pending = orders.filter((order) => order.status === 'pending').length;
+    const printing = orders.filter((order) => order.status === 'printing').length;
+    const delivering = orders.filter((order) => order.status === 'delivering').length;
+    const completed = orders.filter((order) => order.status === 'completed').length;
 
-      return { total, pending, printing, delivering, completed };
-    } catch (error) {
-      console.error('Error fetching order stats:', error);
-      throw new Error('Failed to fetch order statistics');
-    }
+    return { total, pending, printing, delivering, completed };
   },
 };
