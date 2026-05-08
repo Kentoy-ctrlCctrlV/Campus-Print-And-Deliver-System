@@ -21,6 +21,8 @@ export class OrderSelectionComponent {
   paymentMethod: Order['paymentMethod'] = 'gcash';
   notes = '';
   files: FileItem[] = [];
+  receiptImage: string | null = null;
+  receiptFileName: string = '';
 
   gcashQrPath: string = 'kzgcashqr.jpg';
 
@@ -46,9 +48,78 @@ export class OrderSelectionComponent {
     input.value = '';
   }
 
+  onReceiptFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+
+    const file = input.files[0];
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.receiptImage = e.target?.result as string;
+      this.receiptFileName = file.name;
+    };
+    reader.onerror = () => {
+      alert('Error reading file. Please try again.');
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearReceipt() {
+    this.receiptImage = null;
+    this.receiptFileName = '';
+  }
+
+  private getBaseRate(): number {
+    return this.printMode === 'color' ? 8 : 6;
+  }
+
+  private getSizeMultiplier(): number {
+    if (this.paperSize === 'A4') return 1;
+    if (this.paperSize === 'short') return 0.9;
+    return 1.1; // long
+  }
+
+  getTotalPages(): number {
+    return this.copies * this.pagesPerCopy * this.files.length;
+  }
+
+  getPricePerPage(): number {
+    const baseRate = this.getBaseRate();
+    const multiplier = this.getSizeMultiplier();
+    return Math.round((baseRate * multiplier) * 100) / 100;
+  }
+
+  getTotalPrice(): number {
+    const pricePerPage = this.getPricePerPage();
+    const totalPages = this.getTotalPages();
+    return Math.round((pricePerPage * totalPages) * 100) / 100;
+  }
+
+  getPricePerFile(): number {
+    const pricePerPage = this.getPricePerPage();
+    const pagesPerFile = this.copies * this.pagesPerCopy;
+    return Math.round((pricePerPage * pagesPerFile) * 100) / 100;
+  }
+
   submitOrder() {
     if (!this.deliveryBuilding.trim() || this.files.length === 0) {
       alert('Please choose a delivery building and upload at least one document.');
+      return;
+    }
+
+    if (this.paymentMethod === 'gcash' && !this.receiptImage) {
+      alert('Please upload a GCash payment receipt to proceed.');
       return;
     }
 
@@ -67,12 +138,13 @@ export class OrderSelectionComponent {
       paperSize: this.paperSize,
       copies: this.copies,
       pagesPerCopy: this.pagesPerCopy,
-      totalPages: 0,
-      totalPrice: 0,
+      totalPages: this.getTotalPages(),
+      totalPrice: this.getTotalPrice(),
       paymentMethod: this.paymentMethod,
       paymentConfirmed: false,
       files: this.files,
       notes: this.notes,
+      receiptImage: this.receiptImage || undefined,
     };
 
     this.orderService.createOrder(order).subscribe(() => {

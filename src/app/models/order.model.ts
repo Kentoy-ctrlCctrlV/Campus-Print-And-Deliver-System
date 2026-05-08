@@ -28,4 +28,5 @@ export interface Order {
   paymentConfirmed: boolean;
   files: FileItem[];
   notes?: string;
+  receiptImage?: string;
 }

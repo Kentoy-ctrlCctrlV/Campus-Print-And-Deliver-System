@@ -96,6 +96,16 @@ export class OrderService {
     return this.updateOrderStatus(orderId, 'completed');
   }
 
+  deleteOrder(orderId: string): Observable<boolean> {
+    const index = this.orders.findIndex((o) => o.id === orderId);
+    if (index === -1) return of(false);
+
+    this.orders.splice(index, 1);
+    this.orders$.next(this.orders);
+    this.saveOrders();
+    return of(true).pipe(delay(200));
+  }
+
   listRecentOrders(limit = 10): Observable<Order[]> {
     return this.getOrderStream().pipe(map((orders) => orders.slice(0, limit)));
   }

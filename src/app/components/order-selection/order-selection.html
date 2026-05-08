@@ -9,6 +9,41 @@
     </ul>
   </section>
 
+  <!-- Pricing Summary -->
+  <section class="pricing-summary" *ngIf="files.length > 0">
+    <h3>Pricing Breakdown</h3>
+    <div class="price-info">
+      <div class="price-row">
+        <span class="price-label">Price per page:</span>
+        <span class="price-value">₱{{ getPricePerPage() }}</span>
+      </div>
+      
+      <div class="files-pricing">
+        <div class="files-pricing-header">
+          <span>File</span>
+          <span>Pages</span>
+          <span>Cost</span>
+        </div>
+        <div class="file-pricing-row" *ngFor="let file of files">
+          <span class="file-name">{{ file.name }}</span>
+          <span class="file-pages">{{ copies * pagesPerCopy }}</span>
+          <span class="file-cost">₱{{ getPricePerFile() }}</span>
+        </div>
+      </div>
+
+      <div class="price-total">
+        <div class="price-row total-row">
+          <span class="price-label">Total Pages:</span>
+          <span class="price-value">{{ getTotalPages() }}</span>
+        </div>
+        <div class="price-row total-row highlight">
+          <span class="price-label"><strong>Total Cost:</strong></span>
+          <span class="price-value highlight"><strong>₱{{ getTotalPrice() }}</strong></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <h3>Print Options</h3>
   <div class="options-grid">
     <div class="field">
@@ -57,6 +92,29 @@
       <p><strong>KE*T AN***W Z.</strong></p>
       <p>+63 994 445 3342</p>
       <p class="small-id">User ID: ...82W2HZ</p>
+    </div>
+
+    <div class="receipt-upload-section">
+      <h4>Upload GCash Receipt</h4>
+      <label class="receipt-upload-label">
+        <input 
+          type="file" 
+          (change)="onReceiptFileChange($event)" 
+          accept="image/*"
+          class="receipt-input"
+        />
+        <span class="upload-button">Choose Receipt Image</span>
+      </label>
+
+      <div *ngIf="receiptImage" class="receipt-preview">
+        <p class="receipt-file-name">{{ receiptFileName }}</p>
+        <img [src]="receiptImage" alt="GCash Receipt Preview" class="receipt-thumbnail">
+        <button type="button" (click)="clearReceipt()" class="clear-btn">Remove Receipt</button>
+      </div>
+
+      <div *ngIf="!receiptImage" class="receipt-help">
+        <p class="help-text">📸 Please upload a screenshot or photo of your GCash payment confirmation.</p>
+      </div>
     </div>
   </div>
 
