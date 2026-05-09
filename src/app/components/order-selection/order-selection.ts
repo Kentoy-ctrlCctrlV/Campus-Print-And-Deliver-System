@@ -80,6 +80,10 @@ export class OrderSelectionComponent {
     this.receiptFileName = '';
   }
 
+  removeFile(fileId: string) {
+    this.files = this.files.filter((f) => f.id !== fileId);
+  }
+
   private getBaseRate(): number {
     return this.printMode === 'color' ? 8 : 6;
   }

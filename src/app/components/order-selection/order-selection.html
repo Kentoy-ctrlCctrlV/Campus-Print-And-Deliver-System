@@ -5,7 +5,10 @@
     <label>Drag and Drop PDF/DOCS</label>
     <input type="file" (change)="onFileChange($event)" multiple accept=".pdf,.doc,.docx" />
     <ul class="file-list">
-      <li *ngFor="let f of files">{{ f.name }} ({{ f.sizeInBytes }} bytes)</li>
+      <li *ngFor="let f of files" class="file-item">
+        <span>{{ f.name }} ({{ f.sizeInBytes }} bytes)</span>
+        <button type="button" (click)="removeFile(f.id)" class="remove-file-btn" title="Remove this file">✕</button>
+      </li>
     </ul>
   </section>
 

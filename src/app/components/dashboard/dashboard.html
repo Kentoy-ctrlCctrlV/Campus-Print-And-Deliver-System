@@ -19,6 +19,7 @@
         <th>Date</th>
         <th>Status</th>
         <th>Estimated Time</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -27,6 +28,16 @@
         <td>{{ order.createdAt | date:'short' }}</td>
         <td>{{ order.status }}</td>
         <td>{{ order.estimatedCompletion ? (order.estimatedCompletion | date:'short') : '-' }}</td>
+        <td>
+          <button 
+            *ngIf="order.status !== 'completed' && order.status !== 'cancelled'" 
+            (click)="cancelOrder(order.id)" 
+            class="cancel-btn"
+            title="Cancel this order">
+            Cancel
+          </button>
+          <span *ngIf="order.status === 'completed' || order.status === 'cancelled'" class="status-text">{{ order.status }}</span>
+        </td>
       </tr>
     </tbody>
   </table>

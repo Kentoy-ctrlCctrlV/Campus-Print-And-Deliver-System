@@ -55,5 +55,17 @@ export class DashboardComponent {
     }
     this.router.navigate(['/']);
   }
+
+  cancelOrder(orderId: string) {
+    if (confirm('Are you sure you want to cancel this order?')) {
+      this.orderService.deleteOrder(orderId).subscribe((success) => {
+        if (success) {
+          alert('Order cancelled successfully');
+        } else {
+          alert('Failed to cancel order');
+        }
+      });
+    }
+  }
 }
 

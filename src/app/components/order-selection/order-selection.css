@@ -95,6 +95,50 @@
   font-size: 0.9rem;
 }
 
+/* File List Styles */
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0 0;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.file-item span {
+  flex: 1;
+  word-break: break-word;
+}
+
+.remove-file-btn {
+  margin: 0;
+  margin-left: 1rem;
+  padding: 0.4rem 0.6rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.remove-file-btn:hover {
+  background: #dc2626;
+}
+
 /* Pricing Summary Styles */
 .pricing-summary {
   margin: 1.5rem 0;
