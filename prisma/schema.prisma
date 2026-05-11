@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  pending
+  printing
+  delivering
+  completed
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+}
+
+enum PrintMode {
+  bw
+  color
+}
+
+enum PaperSize {
+  A4
+  short
+  long
+}
+
+model Order {
+  id                  String                @id @default(cuid())
+  studentName         String
+  studentEmailOrPhone String
+  status              OrderStatus           @default(pending)
+  totalPrice          Decimal               @default(0) @db.Decimal(10, 2)
+  paymentStatus       PaymentStatus         @default(pending)
+  paymentMethod       String?
+  receiptUrl          String? @db.LongText
+  deliveryAddress     String?
+  deliveryBuilding    String?
+  printMode           PrintMode?
+  paperSize           PaperSize?
+  copies              Int                   @default(1)
+  pagesPerCopy        Int                   @default(1)
+  totalPages          Int?
+  paymentConfirmed    Boolean               @default(false)
+  paymentConfirmedAt  DateTime?
+  estimatedCompletion DateTime?
+  notes               String?
+
+  fileItems           FileItem[]
+  statusHistory       OrderStatusHistory[]
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([studentEmailOrPhone])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model FileItem {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileUrl     String
+  sizeInBytes Int
+  type        String?
+  copies      Int       @default(1)
+  colorMode   PrintMode?
+  paperSize   PaperSize?
+  pageCount   Int?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([orderId])
+}
+
+model OrderStatusHistory {
+  id             String      @id @default(cuid())
+  orderId        String
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  previousStatus OrderStatus
+  newStatus      OrderStatus
+  changedBy      String
+  changedAt      DateTime    @default(now())
+
+  @@index([orderId])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  activityLogs ActivityLog[]
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action    String
+  orderId   String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+}

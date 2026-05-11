@@ -1,0 +1,272 @@
+<div class="admin-container">
+  <!-- Admin Header -->
+  <header class="admin-header">
+    <div class="header-content">
+      <h1>Admin Dashboard</h1>
+      <div class="admin-info">
+        <span *ngIf="currentAdmin" class="admin-name">Welcome, {{ currentAdmin.username }}</span>
+        <button class="logout-btn" (click)="logout()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <!-- Orders Section -->
+    <section class="orders-section">
+      <h2>All Orders</h2>
+
+      <!-- Search and Filter Controls -->
+      <div class="search-filter-container">
+        <div class="search-bar">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Search by student name or order ID..."
+            class="search-input"
+          />
+          <button 
+            *ngIf="searchTerm" 
+            class="clear-search-btn" 
+            (click)="clearSearch()" 
+            title="Clear search"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="filter-controls">
+          <label class="filter-label">Filter by Status:</label>
+          <div class="filter-buttons">
+            <button
+              *ngFor="let status of statusOptions"
+              class="filter-btn"
+              [class.active]="selectedStatusFilter === status"
+              (click)="selectedStatusFilter = status"
+            >
+              {{ status === 'all' ? 'All Orders' : (status | titlecase) }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="orders.length === 0" class="no-orders">
+        <p>No orders yet.</p>
+      </div>
+
+      <div *ngIf="orders.length > 0" class="orders-table-wrapper">
+        <div class="results-info">
+          <span class="result-count">
+            Showing {{ getFilteredOrders().length }} of {{ orders.length }} order(s)
+          </span>
+        </div>
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Student Name</th>
+              <th>Email/Phone</th>
+              <th>Status</th>
+              <th>Created Date</th>
+              <th>Pages</th>
+              <th>Price</th>
+              <th>Payment Method</th>
+              <th>Files</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of getFilteredOrders()" class="order-row">
+              <td class="order-id">{{ order.id }}</td>
+              <td class="student-name">{{ order.studentName }}</td>
+              <td class="contact">{{ order.studentEmailOrPhone }}</td>
+              <td class="status">
+                <span class="badge" [ngClass]="getStatusBadgeClass(order.status)">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="date">{{ order.createdAt | date: 'short' }}</td>
+              <td class="pages">{{ order.totalPages }}</td>
+              <td class="price">₱{{ order.totalPrice.toFixed(2) }}</td>
+              <td class="payment">
+                <div class="payment-method-cell">
+                  <span class="payment-method-badge" [class.gcash]="order.paymentMethod === 'gcash'">
+                    {{ order.paymentMethod === 'gcash' ? 'GCash' : 'COD (Cash on Delivery)' }}
+                  </span>
+                  <div *ngIf="order.paymentMethod === 'gcash' && order.receiptImage" class="receipt-indicator">
+                    <button class="receipt-view-btn" title="View Receipt" (click)="viewOrderDetails(order)">View Receipt</button>
+                    <img [src]="order.receiptImage" alt="Receipt thumbnail" class="receipt-row-thumbnail" />
+                  </div>
+                  <div *ngIf="order.paymentMethod === 'gcash' && !order.receiptImage" class="receipt-missing-warning">
+                    <span title="No receipt uploaded">⚠️ No Receipt</span>
+                  </div>
+                </div>
+              </td>
+              <td class="files">
+                <span class="file-count" *ngIf="order.files && order.files.length > 0">
+                  {{ order.files.length }} file(s)
+                </span>
+                <span class="no-files" *ngIf="!order.files || order.files.length === 0">
+                  No files
+                </span>
+              </td>
+              <td class="actions">
+                <div class="action-buttons">
+                  <button
+                    class="btn btn-primary"
+                    (click)="viewOrderDetails(order)"
+                  >
+                    Details
+                  </button>
+                  <button
+                    class="btn btn-primary"
+                    (click)="downloadOrderFiles(order)"
+                    [disabled]="!order.files || order.files.length === 0"
+                  >
+                    Download
+                  </button>
+                  <select
+                    class="status-select"
+                    [value]="order.status"
+                    (change)="updateOrderStatus(order, $any($event.target).value)"
+                    [disabled]="isLoading"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="printing">Printing</option>
+                    <option value="delivering">Delivering</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <button
+                    class="btn btn-danger"
+                    (click)="deleteOrder(order)"
+                    [disabled]="isLoading"
+                    title="Delete this order"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div *ngIf="getFilteredOrders().length === 0 && orders.length > 0" class="no-results">
+          <p>No orders match your search or filter criteria.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Order Details Modal -->
+  <div *ngIf="showOrderDetails && selectedOrder" class="modal-overlay" (click)="closeOrderDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Order Details</h2>
+        <button class="close-btn" (click)="closeOrderDetails()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-section">
+          <h3>Order Information</h3>
+          <div class="detail-row">
+            <label>Order ID:</label>
+            <span>{{ selectedOrder.id }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Student Name:</label>
+            <span>{{ selectedOrder.studentName }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Email/Phone:</label>
+            <span>{{ selectedOrder.studentEmailOrPhone }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Status:</label>
+            <span class="badge" [ngClass]="getStatusBadgeClass(selectedOrder.status)">
+              {{ selectedOrder.status }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Created Date:</label>
+            <span>{{ selectedOrder.createdAt | date: 'medium' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Print Details</h3>
+          <div class="detail-row">
+            <label>Print Mode:</label>
+            <span>{{ selectedOrder.printMode === 'bw' ? 'Black & White' : 'Color' }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Paper Size:</label>
+            <span>{{ selectedOrder.paperSize }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Copies:</label>
+            <span>{{ selectedOrder.copies }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Pages per Copy:</label>
+            <span>{{ selectedOrder.pagesPerCopy }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Delivery Building:</label>
+            <span>{{ selectedOrder.deliveryBuilding }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Payment Information</h3>
+          <div class="detail-row">
+            <label>Payment Method:</label>
+            <span class="payment-method" [class.gcash]="selectedOrder.paymentMethod === 'gcash'">
+              {{ selectedOrder.paymentMethod === 'gcash' ? 'GCash' : 'Cash on Delivery' }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <label>Payment Status:</label>
+            <span class="payment-status" [class.confirmed]="selectedOrder.paymentConfirmed">
+              {{ selectedOrder.paymentConfirmed ? 'Confirmed' : 'Pending' }}
+            </span>
+          </div>
+
+          <!-- GCash Receipt Section -->
+          <div *ngIf="selectedOrder.paymentMethod === 'gcash' && selectedOrder.receiptImage" class="receipt-section">
+            <h4>GCash Receipt</h4>
+            <img [src]="selectedOrder.receiptImage" alt="GCash Receipt" class="receipt-image">
+            <button class="btn btn-secondary" (click)="downloadReceipt(selectedOrder)">
+              Download Receipt
+            </button>
+          </div>
+
+          <div *ngIf="selectedOrder.paymentMethod === 'gcash' && !selectedOrder.receiptImage" class="receipt-missing">
+            <p>⚠️ No GCash receipt uploaded for this order.</p>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedOrder.notes">
+          <h3>Notes</h3>
+          <p>{{ selectedOrder.notes }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h3>Pricing</h3>
+          <div class="detail-row">
+            <label>Total Pages:</label>
+            <span>{{ selectedOrder.totalPages }}</span>
+          </div>
+          <div class="detail-row">
+            <label>Total Price:</label>
+            <span>₱{{ selectedOrder.totalPrice.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeOrderDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
